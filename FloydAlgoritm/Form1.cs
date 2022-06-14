@@ -17,9 +17,11 @@ namespace FloydAlgoritm
         private int NodeCount = 0; // количество узлов
         private double[,] WaysValueTable; // массив со значениями длин между узлами
         private string[,] AllWays; // массив отображаемых путей, возникших во время действия алгоритма
+        private string OldWays;
         public Form1()
         {
             InitializeComponent();
+            richTextBox1.Text = "LOG:";
         }
         private void SetButtonClick(object sender, EventArgs e)
         {
@@ -76,6 +78,7 @@ namespace FloydAlgoritm
                 // добавляем в дерево ветки из соединений между узлами
                 treeView1.Nodes[SecondAddComboBox.SelectedIndex].Nodes.Add($"Conected with node {FirstAddComboBox.SelectedIndex + 1} (value {Convert.ToDouble(AddValueMaskedTextBox.Text)})");
                 treeView1.Nodes[FirstAddComboBox.SelectedIndex].Nodes.Add($"Conected with node {SecondAddComboBox.SelectedIndex + 1} (value {Convert.ToDouble(AddValueMaskedTextBox.Text)})");
+                Print(true);
             }
             else
                 MessageBox.Show("Select not equal nodes", "Error"); // если после нажатия кнопки выбраны одинаковые узлы - выдает ошибку и функция завершает работу
@@ -98,7 +101,22 @@ namespace FloydAlgoritm
 
         private void CalculateButton_Click(object sender, EventArgs e) // реализация алгоритма Флоида после нажатия кнопки
         {
-            for (var k = 0; k < NodeCount; k++)
+            richTextBox1.Tag = "\n";
+            OldWays = "\n";
+            for (var i = 0; i < NodeCount; i++)
+            {
+                richTextBox1.Tag += Convert.ToString(i + 1) + " ";
+                OldWays += Convert.ToString(i + 1) + " ";
+                for (var j = 0; j < NodeCount; j++)
+                {
+                    richTextBox1.Tag += Convert.ToString(WaysValueTable[i, j]) + " |" + Convert.ToString(j + 1) + "| ";
+                    OldWays += AllWays[i, j] + " |" + Convert.ToString(j + 1) + "| ";
+                }
+                richTextBox1.Tag += "\n";
+                OldWays += "\n";
+            }
+            for (var k = 0; k < NodeCount; k++) // k отвечает за текущий узел с которым мы пытаемся создать связь,
+              //если же длина в сочетании с длиной другого комбинированого узла будет меньшей чем препыдущий минимальный путь - то мы назначаем найдейный путь и его длину как наименьший
             {
                 for (var i = 0; i < NodeCount; i++)
                 {
@@ -108,21 +126,22 @@ namespace FloydAlgoritm
                         {
                             // в случае если новый найденый путь является короче чем предыдущий - элемент текущей итерации перезаписывается
                             WaysValueTable[i, j] = WaysValueTable[i, k] + WaysValueTable[k, j];
-                            // если параметры в сумме дают значение большее общему количеству узлов то убавляем их сумму на 1
-                            // чтобы не было значение большее чем конечный узел
-                            if (j > NodeCount / 2 || k > NodeCount / 2) 
-                                AllWays[i, j] = AllWays[i, k] + " -> " + Convert.ToString(k + j - 1);
-                            else
-                                AllWays[i, j] = AllWays[i, k] + " -> " + Convert.ToString(k + j);
+                            // конечный узел пути равен переменной j + 1 которая отвечает за первый выбраный узел в текущей итерации по координате х
+                            // + 1 так индексация массива начинается с 0 а узлы начинаются с 1
+                            AllWays[i, j] = AllWays[i, k] + " -> " + Convert.ToString(j + 1);
                         }
                     }
                 }
             }
             // показ найденого кратчайшего пути и всех массивов
-            richTextBox1.Text = AllWays[FirstNodeCalculateComboBox.SelectedIndex, SecondNodeCalculateComboBox.SelectedIndex] + "\nFloyd Matrix:";
+            richTextBox1.Text = AllWays[FirstNodeCalculateComboBox.SelectedIndex, SecondNodeCalculateComboBox.SelectedIndex] + " - best way for secected nodes\nFloyd Matrix with connection values for every node:";
             Print(true);
-            richTextBox1.Text += "\nAll suitable ways:";
+            richTextBox1.Text += "\nFirst variant of value for every node matrix:";
+            richTextBox1.Text +=  OldWays;
+            richTextBox1.Text += "\nAll suitable ways for every pair of nodes:";
             Print(false);
+            richTextBox1.Text += "\nFirst variant of ways for every node matrix:";
+            richTextBox1.Text += richTextBox1.Tag;
         }
 
         private void Print(bool arr) // вывод одного из массива в текст бокс в зависимости от параметра функции
@@ -133,9 +152,9 @@ namespace FloydAlgoritm
                 for (var j = 0; j < NodeCount; j++)
                 {
                     if (arr)
-                        richTextBox1.Text += Convert.ToString(WaysValueTable[i, j]) + " ";
+                        richTextBox1.Text += Convert.ToString(WaysValueTable[i, j]) + " |" + Convert.ToString(j + 1) + "| ";
                     else
-                        richTextBox1.Text += Convert.ToString(AllWays[i, j]) + " & ";
+                        richTextBox1.Text += AllWays[i, j] + " |" + Convert.ToString(j + 1) + "| ";
                 }
                 richTextBox1.Text += "\n";
             }
